@@ -2,19 +2,25 @@ package com.eastnets.dao;
 
 import com.eastnets.model.Transaction;
 import com.eastnets.util.DBConnection;
+import org.springframework.stereotype.Repository;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public class TransactionDAO{
-
+    private final DataSource dataSource;
+    public TransactionDAO(DataSource dataSource ) {
+        this.dataSource = dataSource;
+    }
     public List<Transaction> getAllTransactionsForAccount(int accountNumber) throws SQLException {
         String sql = "SELECT * FROM transaction WHERE source = ? OR destination = ?";
         List<Transaction> transactions = new ArrayList<>();
 
-        try (Connection connection = DBConnection.getInstance().getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
 
             stmt.setInt(1, accountNumber);
@@ -40,7 +46,7 @@ public class TransactionDAO{
         String sql = "SELECT * FROM transaction WHERE transaction_id = ?";
         Optional<Transaction> transaction = Optional.empty();
 
-        try (Connection connection = DBConnection.getInstance().getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
 
             stmt.setInt(1, transactionID);
@@ -66,7 +72,7 @@ public class TransactionDAO{
         String sql = "INSERT INTO transaction (source, destination, amount , type) VALUES (?, ?, ? , ?)";
         Optional<Transaction> transactionOptional = Optional.empty();
 
-        try (Connection connection = DBConnection.getInstance().getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
 
             stmt.setObject(1, transaction.getSourceNumber(), Types.INTEGER);

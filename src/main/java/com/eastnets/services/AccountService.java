@@ -9,11 +9,13 @@ import com.eastnets.model.Transaction;
 import com.eastnets.validation.ValidationStrategy;
 import com.eastnets.validation.Validator;
 import com.eastnets.validation.strategies.validateBalance;
+import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+@Service
 public class AccountService {
     AccountDAO accountDao;
     TransactionDAO transactionDao;
@@ -21,6 +23,7 @@ public class AccountService {
     public AccountService(AccountDAO accountDao, TransactionDAO transactionDao) {
         this.accountDao = accountDao;
         this.transactionDao = transactionDao;
+        System.out.println("in account service");
     }
 
 
@@ -29,14 +32,19 @@ public class AccountService {
         try {
             return accountDao.createAccount(account);
         } catch (SQLException e) {
-            throw new RuntimeException("Database Error");
+            throw new RuntimeException("Database Error" + e.getMessage());
         }
     }
 
 
-    public Optional<Account> getAccountByNumber(int accountNumber) {
+    public Account getAccountByNumber(int accountNumber) {
         try {
-            return accountDao.getAccount(accountNumber);
+            Optional<Account> account =  accountDao.getAccount(accountNumber);
+            if(account.isEmpty()){
+                throw new InvalidFieldException("invalid account number");
+            }
+
+            return account.get();
         } catch (SQLException e) {
             throw new RuntimeException("Database Error");
         }

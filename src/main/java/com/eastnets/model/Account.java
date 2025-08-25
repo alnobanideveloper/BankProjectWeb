@@ -1,6 +1,6 @@
 package com.eastnets.model;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 
 public class Account {
 
@@ -8,7 +8,7 @@ public class Account {
     protected String accountType;
     protected int accountNo;
     protected double balance;
-    protected LocalDateTime openedDate;
+    protected Date openedDate;
 
     // No-argument constructor (needed by frameworks)
     public Account() {}
@@ -19,7 +19,6 @@ public class Account {
         this.accountType = accountType;
         this.balance = balance;
         this.nationalID = nationalID;
-        this.openedDate  = LocalDateTime.now();
     }
 
     public Account(Account other) {
@@ -64,11 +63,11 @@ public class Account {
         this.balance = balance;
     }
 
-    public LocalDateTime getOpenedDate() {
+    public Date getOpenedDate() {
         return openedDate;
     }
 
-    public void setOpenedDate(LocalDateTime openedDate) {this.openedDate = openedDate;}
+    public void setOpenedDate(Date openedDate) {this.openedDate = openedDate;}
 
     @Override
     public String toString() {

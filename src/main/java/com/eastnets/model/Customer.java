@@ -1,5 +1,8 @@
 package com.eastnets.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,10 +15,30 @@ public class Customer {
     private String address;
     private Branch branch;
     private boolean isLocked;
-    private String password; private LocalDate openedAt;
+    private String password;
+    private LocalDate openedAt;
     private List<Account> accounts;
 
+    public Customer() { }
 
+    @JsonCreator
+    public Customer(
+            @JsonProperty("nationalId") String nationalId,
+            @JsonProperty("phoneNumber") String phoneNumber,
+            @JsonProperty("password") String password,
+            @JsonProperty("email") String email,
+            @JsonProperty("name") String name,
+            @JsonProperty("branch") Branch branch,
+            @JsonProperty("address") String address
+    ) {
+        this.nationalId = nationalId;
+        this.phoneNumber = phoneNumber;
+        this.password = password;
+        this.email = email;
+        this.name = name;
+        this.branch = branch;
+        this.address = address;
+    }
 
     private Customer(Builder builder) {
         this.phoneNumber = builder.phoneNumber;

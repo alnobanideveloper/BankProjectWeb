@@ -5,7 +5,9 @@ package com.eastnets.dao;
 
 import com.eastnets.model.Branch;
 import com.eastnets.util.DBConnection;
+import org.springframework.stereotype.Repository;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,13 +16,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public class BranchDAO  {
+    private final DataSource dataSource;
+
+    public BranchDAO(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     public Optional<Branch> getBranch(int branchNumber) throws SQLException {
         String sql = "SELECT * FROM branch WHERE branch_number = ?";
         Optional<Branch> branch = Optional.empty();
 
-        try (Connection connection = DBConnection.getInstance().getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
 
             stmt.setInt(1, branchNumber);
@@ -43,7 +51,7 @@ public class BranchDAO  {
         String sql = "SELECT * FROM branch WHERE bank_swift = ?";
         List<Branch> branches = new ArrayList<>();
 
-        try (Connection connection = DBConnection.getInstance().getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
 
             stmt.setString(1, swift);

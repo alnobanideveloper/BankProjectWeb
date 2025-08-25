@@ -3,10 +3,13 @@ package com.eastnets.services;
 import com.eastnets.dao.CustomerDAO;
 import com.eastnets.exceptions.InvalidFieldException;
 import com.eastnets.model.Customer;
+import com.eastnets.util.validatorUtil;
+import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
 import java.util.Optional;
 
+@Service
 public class AuthService  {
     CustomerDAO customerDAO ;
 
@@ -16,10 +19,12 @@ public class AuthService  {
 
 
     //if its empty, then its invalid credentials
-
-    public Optional<Customer> signIn(String email, String password) {
+    public Customer signIn(String email, String password) {
         try{
-            return customerDAO.getCustomerByEmailAndPassword(email , password);
+            Optional<Customer> customer =  customerDAO.getCustomerByEmailAndPassword(email , password);
+            if(customer.isEmpty())
+                throw new InvalidFieldException("invalid credentials");
+            return customer.get();
         } catch (SQLException e){
             throw new RuntimeException("Database error" , e);
         }
@@ -27,12 +32,15 @@ public class AuthService  {
 
 
 
-    public Optional<Customer> registerCustomer(Customer customer) {
-//        validatorUtil.validateCustomer(customer);
+    public Customer registerCustomer(Customer customer) {
+        //validatorUtil.validateCustomer(customer);
         checkIfCustomerExists(customer);
-
         try{
-           return  customerDAO.createCustomer(customer);
+
+             Optional<Customer> newCustomer = customerDAO.createCustomer(customer);
+             if(newCustomer.isEmpty())
+                 throw new InvalidFieldException("invalid fields");
+             return newCustomer.get();
         }catch(SQLException e){
             throw new RuntimeException("Database error" , e);
         }

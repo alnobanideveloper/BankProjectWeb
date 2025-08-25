@@ -4,23 +4,31 @@ package com.eastnets.dao;
 
 import com.eastnets.model.Account;
 import com.eastnets.util.DBConnection;
+import org.springframework.stereotype.Repository;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public class AccountDAO  {
+    private final DataSource dataSource;
 
+    public AccountDAO(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     public List<Account> getAllAccounts(String customerID) throws SQLException {
         List<Account> accounts = new ArrayList<>();
         String sql = "select * from account where customer_id = ?";
 
-        try(Connection connection = DBConnection.getInstance().getConnection();
+        try(Connection connection = dataSource.getConnection();
             PreparedStatement stmt = connection.prepareStatement(sql);){
 
             stmt.setString(1, customerID);
@@ -32,6 +40,7 @@ public class AccountDAO  {
                         rs.getDouble("balance") ,
                         rs.getString("customer_id"));
                 account.setAccountNo( rs.getInt("account_number"));
+                account.setOpenedDate(rs.getTimestamp("opened_date"));
 
                         accounts.add(account);
             }
@@ -43,7 +52,7 @@ public class AccountDAO  {
         String sql = "select * from account where account_number = ?";
         Optional<Account>  account = Optional.empty();
 
-        try (Connection connection = DBConnection.getInstance().getConnection();
+        try (Connection connection =dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql);) {
 
             stmt.setInt(1, accountNumber);
@@ -54,9 +63,8 @@ public class AccountDAO  {
                         rs.getString("account_type"),
                         rs.getDouble("balance"),
                         rs.getString("customer_id")));
-
+                account.get().setOpenedDate(rs.getTimestamp("opened_date"));
                 account.get().setAccountNo(accountNumber);
-
             }
         }
         return account;
@@ -65,7 +73,7 @@ public class AccountDAO  {
     public Optional<Account> createAccount(Account account) throws SQLException{
         String sql = "INSERT INTO account (account_type,  balance, customer_id) VALUES (?,  ?, ?)";
         Optional<Account> optionalAcc = Optional.empty();
-        try (Connection connection = DBConnection.getInstance().getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
 
             stmt.setString(1, account.getAccountType());
@@ -83,7 +91,7 @@ public class AccountDAO  {
     public int editAccount(int accountNumber, Account account) throws SQLException {
         String sql = "UPDATE account SET account_type = ?, balance = ?, customer_id = ? WHERE account_number = ?";
         int rows = 0;
-        try (Connection connection = DBConnection.getInstance().getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
 
             stmt.setString(1, account.getAccountType());
@@ -99,7 +107,7 @@ public class AccountDAO  {
     public int deleteAccount(int accountNumber) throws SQLException {
         String sql = "DELETE FROM account WHERE account_number = ?";
         int rows = 0;
-        try (Connection connection = DBConnection.getInstance().getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
 
             stmt.setInt(1, accountNumber);
@@ -111,7 +119,7 @@ public class AccountDAO  {
     public int deleteAllAccounts(String customerID) throws SQLException {
         String sql = "DELETE FROM account WHERE customer_id = ?";
         int rows = 0;
-        try (Connection connection = DBConnection.getInstance().getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
 
             stmt.setString(1, customerID);

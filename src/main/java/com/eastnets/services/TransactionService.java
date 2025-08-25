@@ -4,9 +4,11 @@ package com.eastnets.services;
 
 import com.eastnets.dao.TransactionDAO;
 import com.eastnets.model.Transaction;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class TransactionService {
     TransactionDAO transactionDAO;
 

@@ -2,9 +2,15 @@ package com.eastnets.dao;
 
 
 import com.eastnets.model.Account;
+import com.eastnets.model.Branch;
 import com.eastnets.model.Customer;
 import com.eastnets.util.DBConnection;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Repository;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,30 +19,43 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+
+@Repository
 public class CustomerDAO  {
-    AccountDAO accountDAO = new AccountDAO();
-
-    //return the added customer
-    public Optional<Customer> createCustomer(Customer customer) throws SQLException{
-        String sql = "INSERT INTO CUSTOMER (nationalId, name, email, address, phone, branch_number , password) VALUES (?, ?, ?, ?, ?, ? , ?)";
-        Optional<Customer> optionaCustomer = Optional.empty();
-        try (Connection connection = DBConnection.getInstance().getConnection();
-             PreparedStatement pstmt = connection.prepareStatement(sql)) {
-
-
-            pstmt.setString(1, customer.getNationalId());
-            pstmt.setString(2, customer.getName());
-            pstmt.setString(3, customer.getEmail());
-            pstmt.setString(4, customer.getAddress());
-            pstmt.setString(5, customer.getPhoneNumber());
-//            pstmt.setInt(6, customer.getBranch().getNumber());
-            pstmt.setString(7, customer.getPassword());
-            pstmt.executeUpdate();
-
-            optionaCustomer = Optional.of(customer);
-        }
-        return optionaCustomer ;
+    private final DataSource dataSource;
+    private AccountDAO accountDAO;
+    private final BranchDAO branchDAO;
+    private final PasswordEncoder passwordEncoder;
+    public CustomerDAO(DataSource dataSource , AccountDAO accountDAO , BranchDAO branchDAO, PasswordEncoder passwordEncoder) {
+        this.dataSource = dataSource;
+        this.accountDAO =  accountDAO;
+        this.branchDAO = branchDAO;
+        this.passwordEncoder = passwordEncoder;
     }
+
+
+
+        //return the added customer
+        public Optional<Customer> createCustomer(Customer customer) throws SQLException{
+            String sql = "INSERT INTO CUSTOMER (nationalId, name, email, address, phone, branch_number , password) VALUES (?, ?, ?, ?, ?, ? , ?)";
+            Optional<Customer> optionaCustomer = Optional.empty();
+            try (Connection connection = dataSource.getConnection();
+                 PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                    String hashedPassword = passwordEncoder.encode(customer.getPassword());
+
+                pstmt.setString(1, customer.getNationalId());
+                pstmt.setString(2, customer.getName());
+                pstmt.setString(3, customer.getEmail());
+                pstmt.setString(4, customer.getAddress());
+                pstmt.setString(5, customer.getPhoneNumber());
+                pstmt.setInt(6, customer.getBranch().getNumber());
+                pstmt.setString(7, hashedPassword);
+                pstmt.executeUpdate();
+
+                optionaCustomer = Optional.of(customer);
+            }
+            return optionaCustomer ;
+        }
 
 
 
@@ -44,7 +63,7 @@ public class CustomerDAO  {
         String sql = "SELECT * FROM CUSTOMER WHERE nationalId = ?";
         Optional<Customer> customer = Optional.empty();
 
-        try (Connection connection = DBConnection.getInstance().getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
 
             stmt.setString(1, id);
@@ -58,6 +77,7 @@ public class CustomerDAO  {
                         .setNationalId(rs.getString("nationalId"))
                         .setAddress(rs.getString("address"))
                         .build());
+
                 List<Account> accounts = accountDAO.getAllAccounts(rs.getString("nationalId"));
                 customer.get().setAccounts(accounts);
             }
@@ -73,7 +93,7 @@ public class CustomerDAO  {
         String sql = "SELECT * FROM CUSTOMER WHERE email = ?";
         Optional<Customer> customer = Optional.empty();
 
-        try (Connection connection = DBConnection.getInstance().getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
 
             stmt.setString(1, email);
@@ -100,7 +120,7 @@ public class CustomerDAO  {
         String sql = "SELECT * FROM CUSTOMER WHERE email = ? and password = ?";
         Optional<Customer> customer = Optional.empty();
         System.out.println("fixing bugs");
-        try (Connection connection = DBConnection.getInstance().getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
             System.out.println("in getbyemailandpassword");
 
@@ -115,7 +135,13 @@ public class CustomerDAO  {
                         .setPhoneNumber(rs.getString("phone"))
                         .setNationalId(rs.getString("nationalId"))
                         .setAddress(rs.getString("address"))
+
                         .build());
+
+                Optional<Branch> branch = branchDAO.getBranch(rs.getInt("branch_number"));
+                if (branch.isPresent())
+                    customer.get().setBranch(branch.get());
+
                 List<Account> accounts = accountDAO.getAllAccounts(rs.getString("nationalId"));
                 customer.get().setAccounts(accounts);
                 System.out.println(customer.get().getAccounts());
@@ -127,7 +153,7 @@ public class CustomerDAO  {
     public int deleteCustomerByID(String id) throws SQLException {
         String sql = "DELETE FROM CUSTOMER WHERE nationalId = ?";
         int rows = 0;
-        try (Connection connection = DBConnection.getInstance().getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
 
             stmt.setString(1, id);
@@ -139,7 +165,7 @@ public class CustomerDAO  {
     public int editCustomerByID(String id, Customer customer) throws SQLException {
         String sql = "UPDATE CUSTOMER SET name = ?, email = ?, address = ?, phone = ?, branch_number = ? WHERE nationalId = ?";
         int rows = 0;
-        try (Connection connection = DBConnection.getInstance().getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
 
             stmt.setString(1, customer.getName());
@@ -160,7 +186,7 @@ public class CustomerDAO  {
         String sql = "SELECT * FROM CUSTOMER";
         List<Customer> customers = new ArrayList<>();
 
-        try (Connection connection = DBConnection.getInstance().getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
@@ -182,7 +208,7 @@ public class CustomerDAO  {
         String sql = "SELECT * FROM CUSTOMER WHERE branch_number = ?";
         List<Customer> customers = new ArrayList<>();
 
-        try (Connection connection = DBConnection.getInstance().getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
 
             stmt.setInt(1, branchNumber);

@@ -13,8 +13,8 @@ public class DBConnection {
     private static String password;
 
     private DBConnection() {
-        System.out.println("Loaded properties from: " + DBConnection.class.getClassLoader().getResource("db.properties"));
-        try (InputStream input = DBConnection.class.getClassLoader().getResourceAsStream("db.properties")) {
+        System.out.println("Loaded properties from: " + DBConnection.class.getClassLoader().getResource("application.properties"));
+        try (InputStream input = DBConnection.class.getClassLoader().getResourceAsStream("application.properties")) {
             Properties prop = new Properties();
             prop.load(input);
 
