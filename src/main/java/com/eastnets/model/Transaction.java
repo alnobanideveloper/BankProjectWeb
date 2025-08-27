@@ -1,19 +1,27 @@
 package com.eastnets.model;
 
-import java.sql.Date;
+import jakarta.persistence.*;
 
+import java.sql.Date;
+@Entity
 public class Transaction {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "transaction_id")
     private int id;
+    @Column(name ="source")
     private Integer sourceNumber;
+    @Column(name = "destination")
     private Integer destinationNumber;
-    private double amount;
+    private float amount;
     private String type;
+    @Column(name = "transaction_date")
     private Date created_at;
 
 
     public Transaction(){}
 
-    public Transaction(double amount, Integer destinationNumber, Integer sourceNumber, String type) {
+    public Transaction(float amount, Integer destinationNumber, Integer sourceNumber, String type) {
         this.amount = amount;
         this.destinationNumber = destinationNumber;
         this.sourceNumber = sourceNumber;
@@ -30,12 +38,12 @@ public class Transaction {
     }
 
 
-    public double getAmount() {
+    public float getAmount() {
         return amount;
     }
 
 
-    public void setAmount(double amount) {
+    public void setAmount(float amount) {
         this.amount = amount;
     }
 

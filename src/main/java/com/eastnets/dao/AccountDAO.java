@@ -3,129 +3,59 @@ package com.eastnets.dao;
 
 
 import com.eastnets.model.Account;
-import com.eastnets.util.DBConnection;
+import com.eastnets.model.Customer;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Repository;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public class AccountDAO  {
-    private final DataSource dataSource;
+    @PersistenceContext
+    private EntityManager em;  // injected by Spring, transaction-aware
 
-    public AccountDAO(DataSource dataSource) {
-        this.dataSource = dataSource;
+    public List<Account> getAllAccounts(String customerID)  {
+        Customer customer = em.find(Customer.class  , customerID);
+        Hibernate.initialize(customer.getAccounts());
+
+        if(customer == null)
+            return List.of();
+
+        return customer.getAccounts();
     }
 
-    public List<Account> getAllAccounts(String customerID) throws SQLException {
-        List<Account> accounts = new ArrayList<>();
-        String sql = "select * from account where customer_id = ?";
+    public Optional<Account> getAccount(int accountNumber){
+       return Optional.ofNullable(em.find(Account.class , accountNumber));
+    }
 
-        try(Connection connection = dataSource.getConnection();
-            PreparedStatement stmt = connection.prepareStatement(sql);){
+    public Optional<Account> createAccount(Account account){
+       em.persist(account);
 
-            stmt.setString(1, customerID);
-            ResultSet rs = stmt.executeQuery();
+        return Optional.of(account);
+    }
 
-            while(rs.next()){
-                Account account = new Account(
-                        rs.getString("account_type"),
-                        rs.getDouble("balance") ,
-                        rs.getString("customer_id"));
-                account.setAccountNo( rs.getInt("account_number"));
-                account.setOpenedDate(rs.getTimestamp("opened_date"));
 
-                        accounts.add(account);
-            }
+    public int editAccount(int accountNumber, Account account) {
+        Account acc = em.find(Account.class, accountNumber);
+        if (account != null) {
+            em.merge(account);
+            return 1;
         }
-        return accounts;
+        return 0;
     }
 
-    public Optional<Account> getAccount(int accountNumber) throws SQLException {
-        String sql = "select * from account where account_number = ?";
-        Optional<Account>  account = Optional.empty();
-
-        try (Connection connection =dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql);) {
-
-            stmt.setInt(1, accountNumber);
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                account = Optional.of( new Account(
-                        rs.getString("account_type"),
-                        rs.getDouble("balance"),
-                        rs.getString("customer_id")));
-                account.get().setOpenedDate(rs.getTimestamp("opened_date"));
-                account.get().setAccountNo(accountNumber);
-            }
+    public int deleteAccount(int accountNumber){
+        Account account = em.find(Account.class, accountNumber);
+        if (account != null) {
+            em.remove(account);
+            return 1;
         }
-        return account;
+            return 0;
     }
-
-    public Optional<Account> createAccount(Account account) throws SQLException{
-        String sql = "INSERT INTO account (account_type,  balance, customer_id) VALUES (?,  ?, ?)";
-        Optional<Account> optionalAcc = Optional.empty();
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
-
-            stmt.setString(1, account.getAccountType());
-            stmt.setDouble(2, account.getBalance());
-            stmt.setString(3, account.getNationalID());
-
-            int rows = stmt.executeUpdate();
-            optionalAcc = Optional.of(account);
-
-        }
-        return optionalAcc;
-    }
-
-
-    public int editAccount(int accountNumber, Account account) throws SQLException {
-        String sql = "UPDATE account SET account_type = ?, balance = ?, customer_id = ? WHERE account_number = ?";
-        int rows = 0;
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
-
-            stmt.setString(1, account.getAccountType());
-            stmt.setDouble(2, account.getBalance());
-            stmt.setString(3, account.getNationalID());
-            stmt.setInt(4, accountNumber);
-
-             rows = stmt.executeUpdate();
-        }
-        return rows;
-    }
-
-    public int deleteAccount(int accountNumber) throws SQLException {
-        String sql = "DELETE FROM account WHERE account_number = ?";
-        int rows = 0;
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
-
-            stmt.setInt(1, accountNumber);
-             rows = stmt.executeUpdate();
-        }
-        return rows;
-    }
-
-    public int deleteAllAccounts(String customerID) throws SQLException {
-        String sql = "DELETE FROM account WHERE customer_id = ?";
-        int rows = 0;
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
-
-            stmt.setString(1, customerID);
-             rows = stmt.executeUpdate();
-        }
-        return rows;
-    }
-
 }

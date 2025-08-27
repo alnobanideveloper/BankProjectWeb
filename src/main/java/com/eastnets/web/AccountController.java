@@ -13,6 +13,7 @@
     import java.util.Optional;
 
     @RestController
+
     public class AccountController {
         private final AccountService accountService;
 
@@ -36,12 +37,11 @@
         }
 
         @PostMapping("/create-account")
-        public ResponseEntity<Account> createAccount(@RequestParam("balance") Double balance ,
-                                                     @RequestParam("accountType") String accountType
-                                                   ){
+        public ResponseEntity<Account> createAccount(@RequestParam("balance") float balance ,
+                                                     @RequestParam("accountType") String accountType){
             CustomerUserDetails customerUserDetails = (CustomerUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             Customer customer = customerUserDetails.getCustomer();
-            Optional<Account> newAccount =  accountService.createAccount(new Account(accountType , balance , customer.getNationalId()));
+            Optional<Account> newAccount =  accountService.createAccount(new Account(accountType , balance , customer));
             return new ResponseEntity<>(newAccount.get(), HttpStatus.OK);
         }
 

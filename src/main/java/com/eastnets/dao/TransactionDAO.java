@@ -2,6 +2,8 @@ package com.eastnets.dao;
 
 import com.eastnets.model.Transaction;
 import com.eastnets.util.DBConnection;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
@@ -12,87 +14,25 @@ import java.util.Optional;
 
 @Repository
 public class TransactionDAO{
-    private final DataSource dataSource;
-    public TransactionDAO(DataSource dataSource ) {
-        this.dataSource = dataSource;
-    }
-    public List<Transaction> getAllTransactionsForAccount(int accountNumber) throws SQLException {
-        String sql = "SELECT * FROM transaction WHERE source = ? OR destination = ?";
-        List<Transaction> transactions = new ArrayList<>();
+    @PersistenceContext
+    private EntityManager em;  // injected by Spring, transaction-aware
+    public List<Transaction> getAllTransactionsForAccount(int accountNumber) {
+        String jpql = "SELECT t FROM Transaction t WHERE t.sourceNumber = :accountNumber OR t.destinationNumber = :accountNumber";
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
-
-            stmt.setInt(1, accountNumber);
-            stmt.setInt(2, accountNumber);
-
-            ResultSet result = stmt.executeQuery();
-            while (result.next()) {
-                Transaction transaction = new Transaction(
-                        result.getDouble("amount"),
-                        result.getInt("destination"),
-                        result.getInt("source"),
-                        result.getString("type")
-                );
-                transaction.setId(result.getInt("transaction_id"));
-                transaction.setCreated_at(result.getDate("transaction_date"));
-                transactions.add(transaction);
-            }
-        }
-        return transactions;
+        return em.createQuery(jpql, Transaction.class)
+                .setParameter("accountNumber", accountNumber)
+                .getResultList();
     }
 
-    public Optional<Transaction> getTransaction(int transactionID) throws SQLException {
-        String sql = "SELECT * FROM transaction WHERE transaction_id = ?";
-        Optional<Transaction> transaction = Optional.empty();
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
-
-            stmt.setInt(1, transactionID);
-            ResultSet result = stmt.executeQuery();
-
-            if (result.next()) {
-                transaction = Optional.of(new Transaction(
-                        result.getDouble("amount"),
-                        result.getInt("destination"),
-                        result.getInt("source"),
-                        result.getString("type")
-                ));
-                transaction.get().setCreated_at(result.getDate("created_at"));
-                transaction.get().setId(result.getInt("transaction_id"));
-            }
-        } catch (SQLException e) {
-            throw new Error("Operation failed: " + e.getMessage());
-        }
-        return transaction;
+    public Optional<Transaction> getTransaction(int transactionID){
+      return Optional.ofNullable(em.find(Transaction.class , transactionID));
     }
 
-    public Optional<Transaction> addTransaction(Transaction transaction) throws SQLException {
-        String sql = "INSERT INTO transaction (source, destination, amount , type) VALUES (?, ?, ? , ?)";
-        Optional<Transaction> transactionOptional = Optional.empty();
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
-
-            stmt.setObject(1, transaction.getSourceNumber(), Types.INTEGER);
-            stmt.setObject(2, transaction.getDestinationNumber(), Types.INTEGER);
-            stmt.setDouble(3, transaction.getAmount());
-            stmt.setString(4, transaction.getType());
-
-            int result = stmt.executeUpdate();
-            if (result > 0)
-                transactionOptional = Optional.of(transaction);
-
-        } catch (SQLException e) {
-            throw new Error("Operation failed: " + e.getMessage());
-        }
-
-        return transactionOptional;
+    public Optional<Transaction> addTransaction(Transaction transaction) {
+        em.persist(transaction);
+        return Optional.of(transaction);
     }
 
 
-    public List<Transaction> getAllTransactionsByCustomer(int customerID)  throws SQLException {
-        return null; // Not implemented yet
-    }
+
 }

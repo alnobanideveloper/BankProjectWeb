@@ -4,11 +4,13 @@ package com.eastnets.services;
 
 import com.eastnets.dao.TransactionDAO;
 import com.eastnets.model.Transaction;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@Transactional
 public class TransactionService {
     TransactionDAO transactionDAO;
 
@@ -18,10 +20,6 @@ public class TransactionService {
 
 
     public List<Transaction> getAllTransactions(int accountNumber){
-        try {
             return transactionDAO.getAllTransactionsForAccount(accountNumber);
-        }catch (Exception e){
-            throw new RuntimeException("Database error" );
-        }
     }
 }

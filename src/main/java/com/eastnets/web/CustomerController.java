@@ -2,6 +2,7 @@ package com.eastnets.web;
 
 import com.eastnets.model.Customer;
 import com.eastnets.security.CustomerUserDetails;
+import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

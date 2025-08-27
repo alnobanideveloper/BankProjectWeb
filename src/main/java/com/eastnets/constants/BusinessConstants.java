@@ -1,5 +1,5 @@
 package com.eastnets.constants;
 
 public class BusinessConstants {
-    public static final double MIN_BALANCE = 200.0;
+    public static final Float MIN_BALANCE = 200.0f;
 }

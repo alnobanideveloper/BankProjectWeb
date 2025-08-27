@@ -12,6 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/accounts")
+
 public class TransactionController {
     private final TransactionService transactionService;
     private final AccountService accountService;
@@ -31,29 +32,29 @@ public class TransactionController {
     }
 
     @PostMapping("/{accountNumber}/withdraw")
-    public ResponseEntity<Double> withdraw(@PathVariable ("accountNumber") int accountNumber , @RequestParam("amount") double amount){
+    public ResponseEntity<Float> withdraw(@PathVariable ("accountNumber") int accountNumber , @RequestParam("amount") float amount){
         Account account = accountService.getAccountByNumber(accountNumber);
-        double newBalance = accountService.withdraw(account , amount);
+        float newBalance = accountService.withdraw(account , amount);
 
         return  ResponseEntity.ok(newBalance);
     }
 
     @PostMapping("/{accountNumber}/deposit")
-    public ResponseEntity<Double> deposit(@PathVariable ("accountNumber") int accountNumber , @RequestParam("amount") double amount){
+    public ResponseEntity<Float> deposit(@PathVariable ("accountNumber") int accountNumber , @RequestParam("amount") float amount){
         Account account = accountService.getAccountByNumber(accountNumber);
-        double newBalance = accountService.deposit(account , amount);
+        float newBalance = accountService.deposit(account , amount);
 
         return  ResponseEntity.ok(newBalance);
     }
 
     @PostMapping("/{accountNumber}/transfer")
-    public ResponseEntity<Double> transfer(@PathVariable ("accountNumber") int accountNumber ,
-                                          @RequestParam("amount") double amount ,
+    public ResponseEntity<Float> transfer(@PathVariable ("accountNumber") int accountNumber ,
+                                          @RequestParam("amount") float amount ,
                                           @RequestParam("toAccount") int toAccountNum){
 
         Account account = accountService.getAccountByNumber(accountNumber);
         Account toAccount = accountService.getAccountByNumber(toAccountNum);
-        double newBalance = accountService.transfer(amount , account , toAccount);
+        float newBalance = accountService.transfer(amount , account , toAccount);
 
         return  ResponseEntity.ok(newBalance);
     }

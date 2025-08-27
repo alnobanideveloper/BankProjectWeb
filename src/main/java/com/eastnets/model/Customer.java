@@ -1,22 +1,29 @@
 package com.eastnets.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-
+@Entity
 public class Customer {
-    private String phoneNumber;
+    private String phone;
+    @Id
     private String nationalId;
     private String name;
     private String email;
     private String address;
+
+    @ManyToOne
+    @JoinColumn(name = "branch_number")
     private Branch branch;
-    private boolean isLocked;
     private String password;
-    private LocalDate openedAt;
+
+    @OneToMany(mappedBy = "customer" , fetch=FetchType.LAZY)
+    @JsonManagedReference
     private List<Account> accounts;
 
     public Customer() { }
@@ -32,7 +39,7 @@ public class Customer {
             @JsonProperty("address") String address
     ) {
         this.nationalId = nationalId;
-        this.phoneNumber = phoneNumber;
+        this.phone = phoneNumber;
         this.password = password;
         this.email = email;
         this.name = name;
@@ -41,10 +48,9 @@ public class Customer {
     }
 
     private Customer(Builder builder) {
-        this.phoneNumber = builder.phoneNumber;
+        this.phone = builder.phoneNumber;
         this.nationalId = builder.nationalId;
         this.name = builder.name;
-        this.isLocked = builder.isLocked;
         this.email = builder.email;
         this.address = builder.address;
         this.branch = builder.branch;
@@ -53,11 +59,11 @@ public class Customer {
     }
 
     public String getPhoneNumber() {
-        return phoneNumber;
+        return phone;
     }
 
     public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
+        this.phone = phoneNumber;
     }
 
     public String getNationalId() {
@@ -117,27 +123,10 @@ public class Customer {
         this.accounts = accounts;
     }
 
-
-    public LocalDate getOpenedAt() {
-        return openedAt;
-    }
-
-    public void setOpenedAt(LocalDate openedAt) {
-        this.openedAt = openedAt;
-    }
-
-    public boolean isLocked() {
-        return isLocked;
-    }
-    public void setIsLocked(boolean isLocked){
-        this.isLocked = isLocked;
-    }
-
-
     @Override
     public String toString() {
         return "name is :" + name
-                + "\nphone number is : " + phoneNumber
+                + "\nphone number is : " + phone
                 + "\nnationalID is : " + nationalId
                 + "\naddress is : " + address
                 + "\nemail is : " + email;
@@ -150,7 +139,6 @@ public class Customer {
         private String email;
         private String address;
         private Branch branch;
-        private  boolean isLocked;
         private String password;
 
         public Builder setPhoneNumber(String phoneNumber) {
@@ -193,13 +181,5 @@ public class Customer {
         public Customer build(){
             return new Customer(this);
         }
-
-
-        public Builder setLocked(boolean locked) {
-            isLocked = locked;
-            return this;
-        }
     }
-
-
 }

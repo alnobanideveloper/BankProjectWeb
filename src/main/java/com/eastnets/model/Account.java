@@ -1,41 +1,56 @@
 package com.eastnets.model;
 
-import java.util.Date;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import jakarta.persistence.*;
 
+import java.util.Date;
+@Entity
+@Table(name = "account")
 public class Account {
 
-    protected String nationalID;
+
+    @ManyToOne
+    @JoinColumn(name = "customer_id", nullable = false)
+    @JsonBackReference
+    protected Customer customer;
+
+    @Column(name="account_type")
     protected String accountType;
+
+    @Id
+    @Column(name = "account_number")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     protected int accountNo;
-    protected double balance;
-    protected Date openedDate;
+
+    @Column(name = "balance")
+    protected float balance;
+
 
     // No-argument constructor (needed by frameworks)
     public Account() {}
 
     // All-arguments constructor
-    public Account(String accountType, double balance , String nationalID ) {
+    public Account(String accountType, float balance , Customer customer ) {
 
         this.accountType = accountType;
         this.balance = balance;
-        this.nationalID = nationalID;
+        this.customer = customer;
     }
 
     public Account(Account other) {
-        this.nationalID = other.nationalID;
+        this.customer = other.customer;
         this.accountType = other.accountType;
         this.accountNo = other.accountNo;
         this.balance = other.balance;
-        this.openedDate = other.openedDate;
     }
 
     // Getters and Setters
-    public String getNationalID() {
-        return nationalID;
+    public Customer getCustomer() {
+        return customer;
     }
 
-    public void setNationalID(String nationalID) {
-        this.nationalID = nationalID;
+    public void setCustomer(Customer customer) {
+        this.customer= customer;
     }
 
     public String getAccountType() {
@@ -55,19 +70,15 @@ public class Account {
         this.accountNo = accountNo;
     }
 
-    public double getBalance() {
+    public float getBalance() {
         return balance;
     }
 
-    public void setBalance(double balance) {
+    public void setBalance(float balance) {
         this.balance = balance;
     }
 
-    public Date getOpenedDate() {
-        return openedDate;
-    }
 
-    public void setOpenedDate(Date openedDate) {this.openedDate = openedDate;}
 
     @Override
     public String toString() {

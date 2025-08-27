@@ -1,13 +1,22 @@
 package com.eastnets.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+
+@Entity
 public class Bank {
+    @Id
+    private String swift_code;
     private String name;
-    private String SWIFT;
     private String address;
+
+    public Bank(){
+
+    }
 
     public Bank(String name, String SWIFT, String address) {
         this.name = name;
-        this.SWIFT = SWIFT;
+        this.swift_code = SWIFT;
         this.address = address;
     }
 
@@ -20,11 +29,11 @@ public class Bank {
     }
 
     public String getSWIFT() {
-        return SWIFT;
+        return swift_code;
     }
 
     public void setSWIFT(String SWIFT) {
-        this.SWIFT = SWIFT;
+        this.swift_code = SWIFT;
     }
 
     public String getName() {
@@ -38,7 +47,7 @@ public class Bank {
     @Override
     public String toString() {
         return "Bank{" +
-                "swiftCode='" + SWIFT + '\'' +
+                "swiftCode='" + swift_code + '\'' +
                 ", name='" + name + '\'' +
                 ", address='" + address + '\'' +
                 '}';

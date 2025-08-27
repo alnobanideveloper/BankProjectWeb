@@ -1,31 +1,36 @@
 package com.eastnets.model;
+import jakarta.persistence.*;
+
 import java.util.List;
 
+@Entity
 public class Branch {
-    private int number;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int branch_number;
     private String name;
-    private String address;
-    private List<Customer> customers;
-    private String bankSwift;
+    private String location;
 
-
+    @ManyToOne
+    @JoinColumn(name = "bank_swift")
+    private Bank bank;
 
     public Branch() {}
 
-    public Branch(String address, String name, int number , String BankSwift ) {
-        this.address = address;
+    public Branch(String location, String name, int number , Bank bank ) {
+        this.location = location;
         this.name = name;
-        this.number = number;
-        this.bankSwift = BankSwift;
+        this.branch_number = number;
+        this.bank = bank;
     }
 
-    public List<Customer> getCustomers() {
-        return customers;
+    public Branch(String location, String name,Bank bank ) {
+        this.location = location;
+        this.name = name;
+        this.bank = bank;
     }
 
-    public void setCustomers(List<Customer> customers) {
-        this.customers = customers;
-    }
+
 
     public String getName() {
         return name;
@@ -36,37 +41,37 @@ public class Branch {
     }
 
     public String getAddress() {
-        return address;
+        return location;
     }
 
     public void setAddress(String address) {
-        this.address = address;
+        this.location = address;
     }
 
     public int getNumber() {
-        return number;
+        return branch_number;
     }
 
     public void setNumber(int number) {
-        this.number = number;
+        this.branch_number = number;
     }
 
 
-    public String getBankSwift() {
-        return bankSwift;
+    public Bank getBank() {
+        return this.bank;
     }
 
-    public void setBankSwift(String bankSwift) {
-        this.bankSwift = bankSwift;
+    public void setBank(Bank bank) {
+        this.bank = bank;
     }
 
 
     @Override
     public String toString() {
         return "Branch{" +
-                "number=" + number  +
+                "number=" + branch_number  +
                 ", name='" + name + '\'' +
-                ", address='" +   address + '\'' +
+                ", address='" +   location + '\'' +
                 '}';
         }
     }

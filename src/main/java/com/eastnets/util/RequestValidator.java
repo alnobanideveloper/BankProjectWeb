@@ -19,13 +19,13 @@ public class RequestValidator {
         return true;
     }
 
-    public static boolean checkDoubleParams(HttpServletRequest request, HttpServletResponse response, String... params) throws IOException {
+    public static boolean checkfloatParams(HttpServletRequest request, HttpServletResponse response, String... params) throws IOException {
         for (String param : params) {
             try {
-                double value = Double.parseDouble(request.getParameter(param).trim());
+                float value = Float.parseFloat(request.getParameter(param).trim());
             }catch(NumberFormatException ex) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.getWriter().write(param + "should be a double number");
+                response.getWriter().write(param + "should be a float number");
                 return false;
             }
         }

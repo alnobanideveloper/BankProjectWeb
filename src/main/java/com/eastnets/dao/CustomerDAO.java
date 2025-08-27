@@ -1,231 +1,69 @@
 package com.eastnets.dao;
 
 
-import com.eastnets.model.Account;
-import com.eastnets.model.Branch;
+
 import com.eastnets.model.Customer;
-import com.eastnets.util.DBConnection;
-import org.springframework.context.annotation.Bean;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import jakarta.persistence.EntityManager;
+
+import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+
 import java.util.Optional;
 
 
 @Repository
-public class CustomerDAO  {
-    private final DataSource dataSource;
-    private AccountDAO accountDAO;
-    private final BranchDAO branchDAO;
-    private final PasswordEncoder passwordEncoder;
-    public CustomerDAO(DataSource dataSource , AccountDAO accountDAO , BranchDAO branchDAO, PasswordEncoder passwordEncoder) {
-        this.dataSource = dataSource;
-        this.accountDAO =  accountDAO;
-        this.branchDAO = branchDAO;
-        this.passwordEncoder = passwordEncoder;
-    }
+public class CustomerDAO {
+
+    @PersistenceContext
+    private EntityManager em;  // injected by Spring, transaction-aware
 
 
-
-        //return the added customer
-        public Optional<Customer> createCustomer(Customer customer) throws SQLException{
-            String sql = "INSERT INTO CUSTOMER (nationalId, name, email, address, phone, branch_number , password) VALUES (?, ?, ?, ?, ?, ? , ?)";
-            Optional<Customer> optionaCustomer = Optional.empty();
-            try (Connection connection = dataSource.getConnection();
-                 PreparedStatement pstmt = connection.prepareStatement(sql)) {
-                    String hashedPassword = passwordEncoder.encode(customer.getPassword());
-
-                pstmt.setString(1, customer.getNationalId());
-                pstmt.setString(2, customer.getName());
-                pstmt.setString(3, customer.getEmail());
-                pstmt.setString(4, customer.getAddress());
-                pstmt.setString(5, customer.getPhoneNumber());
-                pstmt.setInt(6, customer.getBranch().getNumber());
-                pstmt.setString(7, hashedPassword);
-                pstmt.executeUpdate();
-
-                optionaCustomer = Optional.of(customer);
-            }
-            return optionaCustomer ;
-        }
-
-
-
-    public Optional<Customer> getCustomerByID(String id) throws SQLException {
-        String sql = "SELECT * FROM CUSTOMER WHERE nationalId = ?";
-        Optional<Customer> customer = Optional.empty();
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
-
-            stmt.setString(1, id);
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                customer = Optional.of(new Customer.Builder()
-                        .setName(rs.getString("name"))
-                        .setEmail(rs.getString("email"))
-                        .setPhoneNumber(rs.getString("phone"))
-                        .setNationalId(rs.getString("nationalId"))
-                        .setAddress(rs.getString("address"))
-                        .build());
-
-                List<Account> accounts = accountDAO.getAllAccounts(rs.getString("nationalId"));
-                customer.get().setAccounts(accounts);
-            }
-
-
-        }
-
-        return customer;
+    //return the added customer
+    public Optional<Customer> createCustomer(Customer customer) {
+        em.persist(customer);
+        return Optional.of(customer);
 
     }
 
-    public Optional<Customer> getCustomerByEmail(String email) throws SQLException {
-        String sql = "SELECT * FROM CUSTOMER WHERE email = ?";
-        Optional<Customer> customer = Optional.empty();
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
+    public Optional<Customer> getCustomerByID(String id) {
+        return Optional.ofNullable(em.find(Customer.class, id));
+    }
 
-            stmt.setString(1, email);
-            ResultSet rs = stmt.executeQuery();
+    public Optional<Customer> getCustomerByEmail(String email) {
+        return Optional.of(em.createQuery("select c from Customer c where c.email =:email", Customer.class)
+                .setParameter("email", email)
+                .getSingleResultOrNull());
+    }
 
-            if (rs.next()) {
-                customer = Optional.of(new Customer.Builder()
-                        .setName(rs.getString("name"))
-                        .setEmail(rs.getString("email"))
-                        .setPhoneNumber(rs.getString("phone"))
-                        .setNationalId(rs.getString("nationalId"))
-                        .setAddress(rs.getString("address"))
-                        .setPassword(rs.getString("password"))
-                        .build());
-            }
-        }
+    public Optional<Customer> getCustomerByEmailAndPassword(String email, String password) {
 
-        return customer;
+        return Optional.ofNullable(
+                em.createQuery("SELECT c FROM Customer c WHERE c.email = :email AND c.password = :password", Customer.class)
+                        .setParameter("email", email)
+                        .setParameter("password", password)
+                        .getSingleResultOrNull()
+        );
 
     }
 
-    public Optional<Customer> getCustomerByEmailAndPassword(String email , String password) throws SQLException {
-
-        String sql = "SELECT * FROM CUSTOMER WHERE email = ? and password = ?";
-        Optional<Customer> customer = Optional.empty();
-        System.out.println("fixing bugs");
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
-            System.out.println("in getbyemailandpassword");
-
-            stmt.setString(1, email);
-            stmt.setString(2, password);
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                customer = Optional.of(new Customer.Builder()
-                        .setName(rs.getString("name"))
-                        .setEmail(rs.getString("email"))
-                        .setPhoneNumber(rs.getString("phone"))
-                        .setNationalId(rs.getString("nationalId"))
-                        .setAddress(rs.getString("address"))
-
-                        .build());
-
-                Optional<Branch> branch = branchDAO.getBranch(rs.getInt("branch_number"));
-                if (branch.isPresent())
-                    customer.get().setBranch(branch.get());
-
-                List<Account> accounts = accountDAO.getAllAccounts(rs.getString("nationalId"));
-                customer.get().setAccounts(accounts);
-                System.out.println(customer.get().getAccounts());
-            }
+    public int deleteCustomerByID(String id) {
+        Customer customer = em.find(Customer.class, id);
+        if (customer != null) {
+            em.remove(customer);
+            return 1;
+        } else {
+            return 0;
         }
-        return customer;
     }
 
-    public int deleteCustomerByID(String id) throws SQLException {
-        String sql = "DELETE FROM CUSTOMER WHERE nationalId = ?";
-        int rows = 0;
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
+    public int editCustomerByID(String id, Customer customer) {
+        Customer updatedCustomer = em.find(Customer.class , id) ;
+        if(updatedCustomer == null)
+            return 0;
 
-            stmt.setString(1, id);
-            rows = stmt.executeUpdate();
-        }
-        return rows;
-    }
-
-    public int editCustomerByID(String id, Customer customer) throws SQLException {
-        String sql = "UPDATE CUSTOMER SET name = ?, email = ?, address = ?, phone = ?, branch_number = ? WHERE nationalId = ?";
-        int rows = 0;
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
-
-            stmt.setString(1, customer.getName());
-            stmt.setString(2, customer.getEmail());
-            stmt.setString(3, customer.getAddress());
-            stmt.setString(4, customer.getPhoneNumber());
-//            stmt.setInt(5, customer.getBranch().getNumber());
-            stmt.setString(6, id);
-
-            rows = stmt.executeUpdate();
-        }
-        return rows;
-    }
-
-
-
-    public List<Customer> getAllCustomers() throws SQLException {
-        String sql = "SELECT * FROM CUSTOMER";
-        List<Customer> customers = new ArrayList<>();
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                Customer customer = new Customer.Builder()
-                        .setName(rs.getString("name"))
-                        .setEmail(rs.getString("email"))
-                        .setPhoneNumber(rs.getString("phone"))
-                        .setNationalId(rs.getString("nationalId"))
-                        .setAddress(rs.getString("address"))
-                        .build();
-                customers.add(customer);
-            }
-        }
-        return customers;
-    }
-
-    public List<Customer> getAllCustomersOfBranch(int branchNumber) throws SQLException {
-        String sql = "SELECT * FROM CUSTOMER WHERE branch_number = ?";
-        List<Customer> customers = new ArrayList<>();
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
-
-            stmt.setInt(1, branchNumber);
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                Customer customer = new Customer.Builder()
-                        .setName(rs.getString("name"))
-                        .setEmail(rs.getString("email"))
-                        .setPhoneNumber(rs.getString("phone"))
-                        .setNationalId(rs.getString("nationalId"))
-                        .setAddress(rs.getString("address"))
-                        .build();
-                customers.add(customer);
-            }
-
-        }
-        return customers;
+        em.merge(customer);
+        return 1;
     }
 }
